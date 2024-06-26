@@ -39,11 +39,7 @@ pub fn library(b: *std.Build, options_static: std.Build.StaticLibraryOptions, op
 }
 
 pub fn dependency(b: *std.Build, name: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Dependency {
-    return b.dependency(name, .{
-        .target = target,
-        .optimize = optimize,
-        .statically = statically_deps,
-    });
+    return dependencyWithOptions(b, name, target, optimize, .{ .mode = if (statically) Mode.Static else Mode.Shared });
 }
 
 pub const DependencyOptions = struct {
