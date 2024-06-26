@@ -1,13 +1,19 @@
 const std = @import("std");
 
 var statically: bool = false;
+var statically_deps: bool = false;
 
 pub fn set(state: bool) void {
     statically = state;
 }
 
+pub fn set_deps(state: bool) void {
+    statically_deps = state;
+}
+
 pub fn option(b: *std.Build) bool {
     statically = b.option(bool, "statically", "statically compile this dependency (and all children)") orelse false;
+    statically_deps = b.option(bool, "statically_deps", "compile children differently") orelse statically;
     return statically;
 }
 
@@ -27,7 +33,7 @@ pub fn dependency(b: *std.Build, name: []const u8, target: std.Build.ResolvedTar
     return b.dependency(name, .{
         .target = target,
         .optimize = optimize,
-        .statically = statically,
+        .statically = statically_deps,
     });
 }
 
