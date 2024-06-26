@@ -3,17 +3,26 @@ const std = @import("std");
 var statically: bool = false;
 var statically_deps: bool = false;
 
-pub fn set(state: bool) void {
-    statically = state;
+pub const Mode = enum(usize) {
+    Shared = 0,
+    Static = 1,
+};
+
+fn enumToBool(_enum: anytype) bool {
+    return @intFromEnum(_enum) != 0;
 }
 
-pub fn set_deps(state: bool) void {
-    statically_deps = state;
+pub fn setMode(mode: Mode) void {
+    statically = enumToBool(mode);
+}
+
+pub fn setChildrenMode(mode: Mode) void {
+    statically_deps = enumToBool(mode);
 }
 
 pub fn option(b: *std.Build) bool {
-    statically = b.option(bool, "statically", "statically compile this dependency (and all children)") orelse false;
-    statically_deps = b.option(bool, "statically_deps", "compile children differently") orelse statically;
+    statically = b.option(bool, "statically", "statically compile this dependency (and all deps)") orelse false;
+    statically_deps = b.option(bool, "statically_deps", "compile deps differently") orelse statically;
     return statically;
 }
 
@@ -34,6 +43,30 @@ pub fn dependency(b: *std.Build, name: []const u8, target: std.Build.ResolvedTar
         .target = target,
         .optimize = optimize,
         .statically = statically_deps,
+    });
+}
+
+pub const DependencyOptions = struct {
+    mode: ?Mode = null,
+    deps_mode: ?Mode = null,
+};
+
+pub fn dependencyWithOptions(b: *std.Build, name: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: DependencyOptions) *std.Build.Dependency {
+    var statically_status = statically;
+    if (options.mode) |mode| {
+        statically_status = enumToBool(mode);
+    }
+
+    var statically_deps_status = statically_deps;
+    if (options.deps_mode) |mode| {
+        statically_deps_status = enumToBool(mode);
+    }
+
+    return b.dependency(name, .{
+        .target = target,
+        .optimize = optimize,
+        .statically = statically_status,
+        .statically_deps = statically_deps_status,
     });
 }
 
