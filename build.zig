@@ -38,14 +38,17 @@ pub fn library(b: *std.Build, options_static: std.Build.StaticLibraryOptions, op
     };
 }
 
-pub fn dependency(b: *std.Build, name: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Dependency {
-    return dependencyWithOptions(b, name, target, optimize, .{ .mode = if (statically) Mode.Static else Mode.Shared });
-}
-
 pub const DependencyOptions = struct {
     mode: ?Mode = null,
     deps_mode: ?Mode = null,
 };
+
+pub fn dependency(b: *std.Build, name: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Dependency {
+    return dependencyWithOptions(b, name, target, optimize, .{
+        .mode = if (statically) Mode.Static else Mode.Shared,
+        .deps_mode = if (statically_deps) Mode.Static else Mode.Shared,
+    });
+}
 
 pub fn dependencyWithOptions(b: *std.Build, name: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: DependencyOptions) *std.Build.Dependency {
     var statically_status = statically;
